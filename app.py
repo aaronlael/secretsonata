@@ -1,37 +1,31 @@
 from flask import Flask
-from flask import render_template, request
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-import json
+from Models.model import db, User
+from views import logon
 import os
-from sqlalchemy import func
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DB_URL']
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 
 
-@app.route("/")
-def servesite():
-    pass
+def create_app():
+    app = Flask(__name__)
+    app.register_blueprint(logon)
+    app.config['DEBUG'] = False
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DB_URL']
+    db.init_app(app)
+    return app
 
-
-class MetaLines(db.Model):
-    __tablename__ = 'metalines'
-
-    id = db.Column(db.Integer, primary_key=True)
-    line = db.Column(db.String())
-    count = db.Column(db.Integer())
-
-    def __init__(self, line):
-        self.id
-        self.line = line
-        self.count = 0
-
-    def __repr__(self):
-        return f"<Line: {self.line}>"
+def setup_db(app):
+    with app.app_context():
+        db.create_all()
+    user = User("aaron.j.lael@gmail.com", "Aaron Lael")
+    if User.query.filter(User.email == user.email).first():
+        # user already exists
+        pass
+    else:
+        db.session.add(user)
+        db.session.commit()
 
 
 if __name__ == "__main__":
+    app = create_app()
+    app.app_context().push()
+    setup_db(app)
     app.run()
